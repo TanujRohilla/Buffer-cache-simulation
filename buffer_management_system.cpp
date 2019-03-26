@@ -10,7 +10,7 @@ class buffer
 {
 public:
 int block_number,processId;
-buffer *hash_next,*hash_previous,*freelist_next,*freelist_previous;
+buffer *hash1_next,*hash1_previous,*freelist_next,*freelist_previous;
 int status;			// status = 0 ( buffer is free ) , status = 1 (buffer is busy) , status = 2 (buffer is marked delayed write)
 
 //public:		
@@ -18,19 +18,19 @@ int status;			// status = 0 ( buffer is free ) , status = 1 (buffer is busy) , s
 		{
 			block_number = 0;
 			processId = 0;
-			hash_previous = 0;
-			hash_next = 0;
+			hash1_previous = 0;
+			hash1_next = 0;
 			freelist_previous = 0;
 			freelist_next = 0;
 			status = 0;
 		}
 
-		buffer(int block_number, int processId, buffer *hash_next=0, buffer *hash_previous=0, buffer *freelist_next=0, buffer *freelist_previous=0, int status=0)
+		buffer(int block_number, int processId, buffer *hash1_next=0, buffer *hash1_previous=0, buffer *freelist_next=0, buffer *freelist_previous=0, int status=0)
 		{
 			this->block_number = block_number;
 			this->processId = processId;
-			this->hash_next = hash_next;	
-			this->hash_previous = hash_previous;
+			this->hash1_next = hash1_next;	
+			this->hash1_previous = hash1_previous;
 			this->freelist_next = freelist_next;
 			this->freelist_previous = freelist_previous;
 			this->status = status;
@@ -55,14 +55,14 @@ class buffer_cache
 buffer *head,*tail;
 
 public:	
-		int countHashBuffer()
+		int counthash1Buffer()
 		{	int count=0;
 			if(!isEmpty())
 			{
 				buffer* temp=head; 
 
 					do{
-						temp=temp->hash_next;
+						temp=temp->hash1_next;
 						count++;
 					}while(temp!=head);
 
@@ -75,7 +75,7 @@ public:
 
 		}
 
-		buffer* findBuffer(int block_number, int flag)   // if flag =0 -> search into freelist , else search into hashqueue
+		buffer* findBuffer(int block_number, int flag)   // if flag =0 -> search into freelist , else search into hash1queue
 		{
 			buffer* bufferFound = NULL;
 
@@ -94,7 +94,7 @@ public:
 					}while(temp!=head);
 				}
 			}
-			else if (flag==1)		// find in hash
+			else if (flag==1)		// find in hash1
 			{
 				if(!isEmpty())
 				{
@@ -105,7 +105,7 @@ public:
 							bufferFound = temp;
 							break;
 						}
-						temp=temp->hash_next;
+						temp=temp->hash1_next;
 					}while(temp!=head);
 				}
 			}
@@ -113,7 +113,7 @@ public:
 		}
 		
 
-		void insertBufferAtTail(buffer* insertBuffer, int flag)     // if flag=0 -> insert into freelist , else if flag=1 -> insert into hashlist  
+		void insertBufferAtTail(buffer* insertBuffer, int flag)     // if flag=0 -> insert into freelist , else if flag=1 -> insert into hash1list  
 		{   
 			if (flag==0)   // insert into freelist
 			{
@@ -136,29 +136,29 @@ public:
 				}
 			}
 
-			else if (flag==1)		// insert into hash 
+			else if (flag==1)		// insert into hash1 
 			{
 				if(head==NULL && tail==NULL)
 				{
-					insertBuffer->hash_next=insertBuffer;
-					insertBuffer->hash_previous=insertBuffer;
+					insertBuffer->hash1_next=insertBuffer;
+					insertBuffer->hash1_previous=insertBuffer;
 					head = insertBuffer;
 					tail = insertBuffer;
 				}
 
 				else
 				{
-					insertBuffer->hash_previous=tail;
-					insertBuffer->hash_next=head;
-					head->hash_previous = insertBuffer;
-					tail->hash_next = insertBuffer;
-					tail = tail->hash_next;
+					insertBuffer->hash1_previous=tail;
+					insertBuffer->hash1_next=head;
+					head->hash1_previous = insertBuffer;
+					tail->hash1_next = insertBuffer;
+					tail = tail->hash1_next;
 				}
 
 			}
 		}
 
-		void insertBufferAtHeadFreeList(buffer* insertBuffer) // if flag=0 -> insert into freelist, else insert into hashlist
+		void insertBufferAtHeadFreeList(buffer* insertBuffer) // if flag=0 -> insert into freelist, else insert into hash1list
 		{
 		
 			if(head==NULL && tail==NULL)
@@ -228,9 +228,9 @@ public:
 					temp->freelist_next->freelist_previous = temp->freelist_previous;
 				}
 			}
-			else if (flag==1)	// remove buffer from hash
+			else if (flag==1)	// remove buffer from hash1
 			{
-				if(temp->hash_next == temp)
+				if(temp->hash1_next == temp)
 				{
 					head = NULL;
 					tail = NULL;
@@ -239,14 +239,14 @@ public:
 				{
 					if(temp==head)
 					{
-						head=head->hash_next;
+						head=head->hash1_next;
 					}
 					else if(temp==tail)
 					{
-						tail = tail->hash_previous;
+						tail = tail->hash1_previous;
 					}
-					temp->hash_previous->hash_next = temp->hash_next;
-					temp->hash_next->hash_previous = temp->hash_previous;
+					temp->hash1_previous->hash1_next = temp->hash1_next;
+					temp->hash1_next->hash1_previous = temp->hash1_previous;
 				}
 			}
 			return temp;
@@ -264,13 +264,13 @@ public:
 
 	
 
-	void printHash()
+	void printhash1()
 	{
 
 			if (!isEmpty())
 			{
 				buffer* temp =head;
-				if(temp->hash_next == temp)
+				if(temp->hash1_next == temp)
 				{
 					cout<<temp->block_number;
 				}
@@ -278,7 +278,7 @@ public:
 				{
 					do{
 						cout<<temp->block_number<<" ";
-						temp=temp->hash_next;
+						temp=temp->hash1_next;
 					}while(temp!=head);
 				}
 			}
@@ -313,20 +313,20 @@ public:
 
 	
 
-}hash[4], freelist;
+}hash1[4], freelist;
 
-buffer* get_block(int block_number)//, buffer_cache freelist, buffer_cache hash)
+buffer* get_block(int block_number)//, buffer_cache freelist, buffer_cache hash1)
 {
 	/*
 		Algorithm getblk
 
-		Input : block number, freelist, hashlist
+		Input : block number, freelist, hash1list
 		Output : locked buffer that can now be used for block 
 	*/
 		
 		buffer* allocatedBuffer = NULL;
-		buffer *blockBuffer = hash[block_number%4].findBuffer(block_number,1);
-		if(blockBuffer!=NULL)		// if buffer in hash queue 
+		buffer *blockBuffer = hash1[block_number%4].findBuffer(block_number,1);
+		if(blockBuffer!=NULL)		// if buffer in hash1 queue 
 		{
 			if(blockBuffer->status == 1) // buffer is busy      (scenerio 5)
 			{
@@ -335,7 +335,7 @@ buffer* get_block(int block_number)//, buffer_cache freelist, buffer_cache hash)
 				
 				/*allocatedBuffer->status = 0;			// status mark free
 				buffer* tail=freelist.gettail();
-				tail->freelist_next = allocatedBuffer;			// inserting into free list after removing from hash
+				tail->freelist_next = allocatedBuffer;			// inserting into free list after removing from hash1
 				allocatedBuffer->freelist_previous=tail;
 				tail=tail->freelist_next;
 				goto l1;*/
@@ -347,7 +347,7 @@ buffer* get_block(int block_number)//, buffer_cache freelist, buffer_cache hash)
 			//buffer1->status = 1;
 			/*allocatedBuffer->status = 1;			// mark buffer busy
 			allocatedBuffer->processId = processId;	// assigning process id
-			//hash[block_number%4].insert_tail(block_number,processId,1);  				// mark buffer busy     (senerio 1)
+			//hash1[block_number%4].insert_tail(block_number,processId,1);  				// mark buffer busy     (senerio 1)
 			freelist.deleteBuffer(block_number,0);*/			// remove buffer from freelist
 			//return buffer;						
 						// return buffer
@@ -359,7 +359,7 @@ buffer* get_block(int block_number)//, buffer_cache freelist, buffer_cache hash)
 			}
 		}
 
-		else	// block not on hash queue
+		else	// block not on hash1 queue
 		{
 			buffer* freelistBuffer=freelist.removeBufferFromHeadFreeList();
 			if (freelist.isEmpty())			// freelist is empty       (scenerio 4)
@@ -387,22 +387,22 @@ buffer* get_block(int block_number)//, buffer_cache freelist, buffer_cache hash)
 				//goto l1;
 				}
 				else
-				{	if( hash[block_number%4].countHashBuffer() <= 4 )
+				{	if( hash1[block_number%4].counthash1Buffer() <= 4 )
 					{
 						allocatedBuffer = freelistBuffer;
 					
-						hash[block_number%4].insertBufferAtTail(freelistBuffer,1);
+						hash1[block_number%4].insertBufferAtTail(freelistBuffer,1);
 			/* senerio 2 -- found a free buffer */
 			//buffer *temp=freelist.del_beg();
-			//hash[temp->block_number%4].deleteBuffer(temp->block_number);   // remove particular from old hash queue
-			//hash[block_number%4].insert_tail(block_number,processId,1);				  // put buffer onto new hash queue
-						cout<<"\n\ninserted successfully into hash = "<<freelistBuffer->block_number;
-						int n=hash[block_number%4].countHashBuffer();
-						cout<<"\n\nCount = "<<n;
+			//hash1[temp->block_number%4].deleteBuffer(temp->block_number);   // remove particular from old hash1 queue
+			//hash1[block_number%4].insert_tail(block_number,processId,1);				  // put buffer onto new hash1 queue
+						//cout<<"\n\ninserted successfully into hash1 = "<<freelistBuffer->block_number;
+						int n=hash1[block_number%4].counthash1Buffer();
+						//cout<<"\n\nCount = "<<n;
 					}
 					else
 					{
-						cout<<"\nCannot insert more than 5 buffer in hash";
+						cout<<"\nCannot insert more than 5 buffer in hash1";
 					}
 				}
 			//return buffer;											// return buffer
@@ -411,12 +411,11 @@ buffer* get_block(int block_number)//, buffer_cache freelist, buffer_cache hash)
 		return allocatedBuffer;			// return allocated buffer	
 	//}
 }
-//buffer_cache hash[4], freelist;
 
 bool brelse(int block_number,int status)
 {
 	
-	buffer* release = hash[block_number%4].findBuffer(block_number,1);
+	buffer* release = hash1[block_number%4].findBuffer(block_number,1);
 	if(release!=NULL)
 	{
 		release->status = status;
@@ -447,7 +446,7 @@ void process(int processId)
 			updateBuffer(block,blk_num,processId);
 			cout<<"\nworking on block number = "<<blk_num;
 			usleep(10000);
-			int status = rand()%3;			// either 0,1,2
+			int status = rand()%3;			// either 0,1,2	
 			if(brelse(blk_num,status))
 			{
 				cout<<"\nsuccessfully release the buffer";
@@ -465,117 +464,47 @@ void process(int processId)
 	}
 }
 
-/*void displayHashAndFreeList()
+void displayhash1AndFreeList()
 {
-	cout<<"\nHash\n";
-	cout<<"\nHash 0 : ";
-	hash[0].printHash();
-	cout<<"\nHash 1 : ";
-	hash[1].printHash();
-	cout<<"\nHash 2 : ";
-	hash[2].printHash();
-	cout<<"\nHash 3 : ";
-	hash[3].printHash();
+	cout<<"\nhash1\n";
+	cout<<"\nhash1 0 : ";
+	hash1[0].printhash1();
+	cout<<"\nhash1 1 : ";
+	hash1[1].printhash1();
+	cout<<"\nhash1 2 : ";
+	hash1[2].printhash1();
+	cout<<"\nhash1 3 : ";
+	hash1[3].printhash1();
 
 	cout<<"\nFreelist\n";
 	cout<<"\nfreelist : ";
 	freelist.printFreeList();
 }
-*/
+
 int main()
 {
-	
-	/*int blk_num,process;
-	char ch;
-	buffer* block;
+	// inilizatilizing free list
 	srand (time(0));
 	for (int i=0; i<20; i++)   // initialising 20 buffer in freelist
 	{
 				freelist.insertBufferAtTail(new buffer(),0); 
 	}
 
-	cout<<"\nHash\n";
-		cout<<"\nHash 0 : ";
-		hash[0].printHash();
-		cout<<"\nHash 1 : ";
-		hash[1].printHash();
-		cout<<"\nHash 2 : ";
-		hash[2].printHash();
-		cout<<"\nHash 3 : ";
-		hash[3].printHash();
-
-		cout<<"\nFreelist\n";
-		cout<<"\nfreelist : ";
-		freelist.printFreeList();
-	// assuming user will act as process (for testing );
-	
-	do
-	{
-		block=NULL;
-		cout<<"\nEnter block number = ";
-		cin>>blk_num;
-		cout<<"Enter processId = ";
-		cin>>process;
-		block = get_block(blk_num);//,process);  //block request
-		cout<<"\nblock return value : "<<block;
-		if(block!=NULL)
-		{
-			updateBuffer(block,blk_num,process);
-		}
-	
-		cout<<"\nAllocated buffer = "<<block;
-
-		cout<<"\nDo you need more block (y/n) = ";
-		cin>>ch;
-
-		cout<<"\nHash\n";
-		cout<<"\nHash 0 : ";
-		hash[0].printHash();
-		cout<<"\nHash 1 : ";
-		hash[1].printHash();
-		cout<<"\nHash 2 : ";
-		hash[2].printHash();
-		cout<<"\nHash 3 : ";
-		hash[3].printHash();
-
-		cout<<"\nFreelist\n";
-		cout<<"\nfreelist : ";
-		freelist.printFreeList();
-	}while(ch=='y');*/
-
-	init();
 	cout<<"\nInitially";
-	cout<<"\nHash\n";
-	cout<<"\nHash 0 : ";
-	hash[0].printHash();
-	cout<<"\nHash 1 : ";
-	hash[1].printHash();
-	cout<<"\nHash 2 : ";
-	hash[2].printHash();
-	cout<<"\nHash 3 : ";
-	hash[3].printHash();
+	displayhash1AndFreeList();
+	
+	thread t1(process,1);
+	thread t2(process,2);
+	thread t3(process,3);
+	thread t4(process,4);
+	t1.join();
+	t2.join();
+	t3.join();
+	t4.join();
 
-	cout<<"\nFreelist\n";
-	cout<<"\nfreelist : ";
-	freelist.printFreeList();
-
-	thread t(process,1);
-	t.join();
-
-	cout<<"\nAfter process 1 done is work";
-	cout<<"\nHash\n";
-	cout<<"\nHash 0 : ";
-	hash[0].printHash();
-	cout<<"\nHash 1 : ";
-	hash[1].printHash();
-	cout<<"\nHash 2 : ";
-	hash[2].printHash();
-	cout<<"\nHash 3 : ";
-	hash[3].printHash();
-
-	cout<<"\nFreelist\n";
-	cout<<"\nfreelist : ";
-	freelist.printFreeList();
+	cout<<"\nState of free list and hash after execution of process";
+	displayhash1AndFreeList();
+	
 
 
 return 0;
