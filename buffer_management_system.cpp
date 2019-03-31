@@ -10,7 +10,7 @@
 
 using namespace std;
 
-mutex m;
+mutex m;	// mutex lock
 
 class buffer
 {
@@ -517,7 +517,7 @@ void updateBuffer(buffer* buffer,int block_number,int processId)
 
 
 
-void process(int processId)
+void processManager(int processId)
 {
 	/*
 		Objective : Fulfill all the request (process need free buffer to complete its task) of specific Process
@@ -584,10 +584,10 @@ int main()
 	displayHashAndFreeList();
 	
 	thread t[MAX_THREAD];				// creating thread
-	for (int i=0;i<MAX_THREAD;i++)
-		t[i]= thread(process,i+1);
+	for (int i=0; i<MAX_THREAD; i++)
+		t[i] = thread(processManager,i+1);
 
-	for (int i=0;i<MAX_THREAD;i++)
+	for (int i=0; i<MAX_THREAD; i++)
 		t[i].join();					// wait for t[i] to finish
 
 
