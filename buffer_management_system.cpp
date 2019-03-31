@@ -5,6 +5,9 @@
 #include<thread>
 #include<mutex>
 
+#define MAX_REQUEST 10
+#define MAX_THREAD 4
+
 using namespace std;
 
 mutex m;
@@ -15,10 +18,15 @@ public:
 int block_number,processId;
 buffer *hash_next,*hash_previous,*freelist_next,*freelist_previous;
 int status;			// status = 0 ( buffer is free ) , status = 1 (buffer is busy) , status = 2 (buffer is marked delayed write)
-
-//public:		
+		
 		buffer()
 		{
+			/*
+				Objective : Default Constructor for the Buffer
+				Input : None
+				Return : None
+			*/
+
 			block_number = 0;
 			processId = 0;
 			hash_previous = 0;
@@ -30,6 +38,12 @@ int status;			// status = 0 ( buffer is free ) , status = 1 (buffer is busy) , s
 
 		buffer(int block_number, int processId, buffer *hash_next=0, buffer *hash_previous=0, buffer *freelist_next=0, buffer *freelist_previous=0, int status=0)
 		{
+			/*
+				Objective : Parameterized Constructor to initialize Variables for the Buffer
+				Input : None
+				Return : None 
+			*/
+
 			this->block_number = block_number;
 			this->processId = processId;
 			this->hash_next = hash_next;	
@@ -41,6 +55,12 @@ int status;			// status = 0 ( buffer is free ) , status = 1 (buffer is busy) , s
 
 		void display()
 		{
+			/*
+				Objective : Function to print Information about the Current Buffer
+				Input : None
+				Return : None
+			*/
+			
 			cout<<"\nBlock number = "<<block_number;
 			cout<<"\nProcess Id = "<<processId;
 			cout<<"\nStatus = ";
@@ -51,6 +71,10 @@ int status;			// status = 0 ( buffer is free ) , status = 1 (buffer is busy) , s
 			else if(status==-1)
 				cout<<"Delayed Write";
 		}
+
+
+
+
 };
 
 class buffer_cache
@@ -58,8 +82,14 @@ class buffer_cache
 buffer *head,*tail;
 
 public:	
-		int countHashBuffer()   // count the number of buffer in hash queue
-		{	int count=0;
+		int countHashBuffer()   
+		{	/*
+				Objective : Count the number of buffer in Hash Queue
+				Input : None
+				Return : Number of buffer
+			*/
+
+			int count=0;
 			if(!isEmpty())
 			{
 				buffer* temp=head; 
@@ -78,11 +108,17 @@ public:
 
 		}
 
-		buffer* searchBuffer(int block_number, int flag)   // if flag =0 -> search into freelist , else search into hashqueue
+		buffer* searchBuffer(int block_number, int flag)  
 		{
+			/*
+				Objective : Check whether a specific Block Buffer is in the free List (Flag = 0 ) or Hash Queue (Flag = 1)
+				Input : Block number , Flag 
+				Return : Search Block Buffer
+			*/
+			
 			buffer* bufferFound = NULL;
 
-			if (flag==0)	// find in freelist
+			if (flag==0)	// search buffer in freelist
 			{
 				if(!isEmpty())
 				{
@@ -97,7 +133,7 @@ public:
 					}while(temp!=head);
 				}
 			}
-			else if (flag==1)		// find in hash
+			else if (flag==1)		// search buffer in hash queue
 			{
 				if(!isEmpty())
 				{
@@ -116,9 +152,15 @@ public:
 		}
 		
 
-		void insertBufferAtTail(buffer* insertBuffer, int flag)     // if flag=0 -> insert into freelist , else if flag=1 -> insert into hashlist  
+		void insertBufferAtTail(buffer* insertBuffer, int flag)       
 		{   
-			if (flag==0)   // insert into freelist
+			/*
+				Objective : Insert Buffer at Tail of Free List(flag 0) or Hash Queue(flag 1)
+				Input : Buffer, Flag
+				Return : None
+			*/
+
+			if (flag==0)   // insert buffer into freelist
 			{
 				if(head==NULL && tail==NULL)
 				{
@@ -139,7 +181,7 @@ public:
 				}
 			}
 
-			else if (flag==1)		// insert into hash 
+			else if (flag==1)		// insert buffer into hash queue
 			{
 				if(head==NULL && tail==NULL)
 				{
@@ -161,8 +203,13 @@ public:
 			}
 		}
 
-		void insertBufferAtHeadFreeList(buffer* insertBuffer) // if flag=0 -> insert into freelist, else insert into hashlist
+		void insertBufferAtHeadFreeList(buffer* insertBuffer) 
 		{
+			/*
+				Objective : Insert Buffer at Head of Free List
+				Input : Buffer
+				Return : None
+			*/
 		
 			if(head==NULL && tail==NULL)
 			{
@@ -185,6 +232,12 @@ public:
 
 		buffer* removeBufferFromHeadFreeList()
 		{
+			/*
+				Objective : Remove Buffer from Head of Free List
+				Input : None
+				Return : Removed Buffer
+			*/
+
 			buffer* temp;
 			if(!isEmpty())
 			{
@@ -208,6 +261,12 @@ public:
 
 		buffer* removeSpecificBuffer(int block_number,int flag)
 		{
+			/*
+				Objective : Remove a specific Buffer from Free List(flag 0) or Hash Queue(flag 1)
+				Input : Block number, Flag
+				Return : Removed Buffer
+			*/
+
 			buffer* temp = searchBuffer(block_number,flag);
 
 			if(flag==0) // remove buffer from freelist
@@ -231,7 +290,7 @@ public:
 					temp->freelist_next->freelist_previous = temp->freelist_previous;
 				}
 			}
-			else if (flag==1)	// remove buffer from hash
+			else if (flag==1)	// remove buffer from hash queue
 			{
 				if(temp->hash_next == temp)
 				{
@@ -258,29 +317,41 @@ public:
 
 		bool isEmpty()
 		{
+			/*
+				Objective : Check whether list is empty or not
+				Input : None
+				Return : True (Empty) or False (Non-Empty)
+			*/
 			if(head==NULL && tail==NULL)
 				return true;
 			else
 				return false;
 
-	}
+		}
 
 	
 
-	void printHash()
-	{
+		void printHash()
+		{
+			/*
+				Objective : Print the content of a specific Hash Queue
+				Input : None
+				Return : None
+			*/
 
 			if (!isEmpty())
 			{
 				buffer* temp =head;
 				if(temp->hash_next == temp)
 				{
-					cout<<"("<<temp->block_number<<","<<temp->processId<<")"<<"  ";
+					//cout<<"("<<temp->block_number<<","<<temp->processId<<")"<<"  ";
+					cout<<temp->block_number<<" ";
 				}
 				else
 				{
 					do{
-						cout<<"("<<temp->block_number<<","<<temp->processId<<")"<<"  ";
+						//cout<<"("<<temp->block_number<<","<<temp->processId<<")"<<"  ";
+						cout<<temp->block_number<<" ";
 						temp=temp->hash_next;
 					}while(temp!=head);
 				}
@@ -289,10 +360,16 @@ public:
 			else
 				cout<<"Underflow";
 
-	}
+		}
 
-	void printFreeList()
-	{
+		void printFreeList()
+		{
+			/*
+				Objective : Print the content of Free List
+				Input : None
+				Return : None
+			*/
+
 			if (!isEmpty())
 			{
 				buffer* temp =head;
@@ -318,100 +395,77 @@ public:
 
 }hashQueue[4], freelist;
 
-buffer* getBlock(int block_number)
+buffer* getBlock(int block_number,int pid)
 {
 	/*
-		Algorithm getblk
+		Objective : Implements the basic getblk algorithm and returns the available buffer (if any)
+		            	1. The kernel finds the block on its hash queue, and its buffer is free.
+					    2. The kernel cannot find the block on the hash queue, so it allocates a buffer from the free list.
+					   	3. The kernel cannot find the block on the hash queue and, in attempting to allocate a buffer from the free list 
+					   		(as in scenario 2), finds a buffer on the free list that has been marked "delayed write." The kernel must write the
+					      	"delayed write" buffer to disk and allocate another buffer.
+						4. The kernel cannot find the block on the hash queue, and the free list of buffers is empty.
+					    5. The kernel finds the block on the hash queue, but its buffer is currently busy.
 
-		Input : block number, freelist, hashlist
-		Output : locked buffer that can now be used for block 
+		Input : Block number, ProcessId
+		Return : Free Block 
 	*/
-		//l1:
+		
 		buffer* allocatedBuffer = NULL;
 		while(allocatedBuffer==NULL)
 		{
-		buffer *blockBuffer = hashQueue[block_number%4].searchBuffer(block_number,1);
-		if(blockBuffer!=NULL)		// if buffer in hash queue 
-		{
-			if(blockBuffer->status == 1) // buffer is busy      (scenerio 5)
+			buffer *blockBuffer = hashQueue[block_number%4].searchBuffer(block_number,1);
+			if(blockBuffer!=NULL)		// if buffer in hash queue 
 			{
-				cout<<"\nBuffer is busy. Process should sleep\n";
-				usleep (1000);   // sleep(event buffer become free)
-				//goto l1;
-				continue;
-			}
-			
-			else if (blockBuffer -> status == 0)
-			{
+				if(blockBuffer->status == 1) // buffer is busy      (scenerio 5)
+				{
+					cout<<"\nBuffer is busy. Process "<<pid<<" should sleep\n";
+					sleep (4);   // sleep(event buffer become free)
+					continue;
+				}
 				freelist.removeSpecificBuffer(block_number,0);
 				allocatedBuffer=blockBuffer;
 			}
-		}
 
-		else	// block not on hash queue
-		{
-			buffer* freelistBuffer=freelist.removeBufferFromHeadFreeList();
-			if (freelist.isEmpty())			// freelist is empty       (scenerio 4)
+			else	// block not on hash queue
 			{
-				cout<<"\nFreelist is empty. No buffer is available";
-				usleep(1000);			//sleep(event any buffer become free);
-				//goto l1;				// check for buffer again
-				continue;
-			}
-			
-			else if(freelistBuffer!=NULL)
-			{
-				if(freelistBuffer->status == 2)  				// buffer marked delayed write     (scenerio 3)
+				buffer* freelistBuffer=freelist.removeBufferFromHeadFreeList();
+				if (freelist.isEmpty())			// freelist is empty       (scenerio 4)
 				{
-					cout<<"\nAsync write buffer to disk (Delayed Write)";//asynchronous write buffer to disk
-					usleep(1000);
-					freelistBuffer->status = 0;
-					freelist.insertBufferAtHeadFreeList(freelistBuffer);
-					//goto l1;				// check for buffer again
+					cout<<"\nFreelist is empty. No buffer is available";
+					sleep(4);			//sleep(event any buffer become free);
 					continue;
 				}
-				else
-				{	//if( hashQueue[block_number%4].countHashBuffer() <= 4 )
-					//{
+			
+				else if(freelistBuffer!=NULL)
+				{
+					if(freelistBuffer->status == 2)  				// buffer marked delayed write     (scenerio 3)
+					{
+						cout<<"\nAsync write buffer to disk (Delayed Write)";   //asynchronous write buffer to disk
+						sleep(4);
+						freelistBuffer->status = 0;
+						freelist.insertBufferAtHeadFreeList(freelistBuffer);
+						continue;
+					}
+					else
+					{	
 						allocatedBuffer = freelistBuffer;
 						hashQueue[block_number%4].insertBufferAtTail(freelistBuffer,1);
-					//}
-					//else
-					//{
-					//	cout<<"\nCannot insert more than 5 buffer in hash queue";
-					//}
+					}
 				}
 			}
+			return allocatedBuffer;			// return allocated buffer	
 		}
-		return allocatedBuffer;			// return allocated buffer	
-		}
 }
-
-bool brelse(int block_number,int status)
-{
-	
-	buffer* release = hashQueue[block_number%4].searchBuffer(block_number,1);
-	if(release!=NULL)
-	{ 	
-		release->status = status;
-		freelist.insertBufferAtTail(release,0);
-
-		return true;
-	}
-	return false;
-}
-
-void updateBuffer(buffer* buffer,int block_number,int processId)
-{
-	buffer->block_number = block_number;
-	buffer->processId = processId;
-	buffer->status = 1;    // buffer mark busy;
-}
-
 
 void displayHashAndFreeList()
 {
-	//m.lock();
+	/*
+		Objective : Display hash queue and free list
+		Input : None
+		Return : None
+	*/
+	
 	cout<<"\n\n-----HASH QUEUE------";
 	cout<<"\nhash 0 : ";
 	hashQueue[0].printHash();
@@ -425,40 +479,82 @@ void displayHashAndFreeList()
 	cout<<"\n\n-------FREELIST-------";
 	cout<<"\nfreelist : ";
 	freelist.printFreeList();
-	//m.unlock();
 }
+
+bool brelse(int block_number,int status)
+{
+	/*
+		Objective : Release the buffer from hash queue
+		Input : Block number, status ( to be updated in free list { either free or delayed write } )
+		Return : True (buffer is released) or False (buffer not released)
+	*/
+	
+	buffer* release = hashQueue[block_number%4].searchBuffer(block_number,1);   // search buffer on hash queue
+	if(release!=NULL)
+	{ 	
+		release->status = status;
+		freelist.insertBufferAtTail(release,0);
+		return true;
+	}
+	return false;
+}
+
+void updateBuffer(buffer* buffer,int block_number,int processId)
+{
+	/*
+		Objective : Updates the content of the buffer with specified values
+		Input : Buffer, block number, process id
+		Return : None
+	*/
+
+	buffer->block_number = block_number;
+	buffer->processId = processId;
+	buffer->status = 1;    // buffer mark busy;
+}
+
+
+
 
 void process(int processId)
 {
-	int request = 2;
+	/*
+		Objective : Fulfill all the request (process need free buffer to complete its task) of specific Process
+		Input : Process Id
+		Return : None
+	*/
+
+	int request = MAX_REQUEST;
 	srand(time(NULL));
 	while(request>0)
 	{	
-		//m.lock();
 		int blk_num = rand()%20 + 1;
 		cout<<"\nProcess number  = "<<processId<<"  , requested block number =  "<<blk_num;
-		buffer* block = getBlock(blk_num);
+		
+		m.lock();		// acquiring lock 		
+		
+		buffer* block = getBlock(blk_num,processId);
 		if(block!=NULL)
 		{
 			updateBuffer(block,blk_num,processId);
-			cout<<"\nWorking on block number = "<<blk_num;
-			//m.unlock();
-			//cout<<"\nblock_number = "<<blk_num<<" now sleeping";
-			usleep(1000);
-			//m.unlock();
-			int status = rand()%2;			// either 0,1,2
-			if(status == 1)
-			{
-				status=2;
-				//cout<<"\n------------------------------------------> Delayed write";	
-			}
+			cout<<"\nBlock Number "<<blk_num<<" is allocated to Process "<<processId;
+			
+			m.unlock();		// releasing lock
+			sleep(4);			
+			
+			int status = rand()%2;			// randomly selecting status for releasing the buffer
+			
+			if(status == 1)					
+				status=2;	
+			
 			if(brelse(blk_num,status))
 			{
-				cout<<"\nSuccessfully release the buffer "<<blk_num<<" by Process "<<processId;
-				//if(status==2)
-				//	cout<<"Delayed Write";
-					
+				cout<<"\nSuccessfully release the buffer "<<blk_num<<" by Process "<<processId<<" with Status = ";
+				if(status==0)
+					cout<<"Free";
+				else
+					cout<<"Delayed Write";
 			}
+			
 			else
 			{
 				cout<<"\nBuffer is not released due to some error";
@@ -469,10 +565,6 @@ void process(int processId)
 			cout<<"\nUnable to access the requested block";
 		}
 		request--;
-		//cout<<"\nAfter Request no. ="<<request-9;
-		
-		displayHashAndFreeList();
-		//m.unlock();
 	}
 }
 
@@ -489,16 +581,15 @@ int main()
 	cout<<"\nInitially";
 	displayHashAndFreeList();
 	
-	thread t1(process,1);
-	thread t2(process,2);
-	//thread t3(process,3);
-	//thread t4(process,4);
-	t1.join();
-	t2.join();
-	//t3.join();
-	//t4.join();
+	thread t[MAX_THREAD];
+	for (int i=0;i<MAX_THREAD;i++)
+		t[i]= thread(process,i+1);
 
-	cout<<"\nState of free list and hash after execution of process";
+	for (int i=0;i<MAX_THREAD;i++)
+		t[i].join();
+
+
+	cout<<"\n\nState of free list and hash after execution of process";
 	displayHashAndFreeList();
 	return 0;
 }
