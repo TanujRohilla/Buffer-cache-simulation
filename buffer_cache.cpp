@@ -415,9 +415,9 @@ void displayHashAndFreeList()
 
 void blockAcquired(int signum)
 {		
-		cout<<"\nBlock Acquired Successfully";
-		sleep(4);
-		signal(SIGUSR1,blockAcquired);
+	cout<<"\nBlock Acquired Successfully";
+	sleep(4);
+	signal(SIGUSR1,blockAcquired);
 }
 
 void blockReleased(int signum)
@@ -603,7 +603,6 @@ int main()
 
 	for (int i=0; i<MAX_THREAD; i++)
 		t[i].join();					// wait for t[i] to finish
-
 
 	cout<<"\n\nState of free list and hash after execution of process";
 	displayHashAndFreeList();
