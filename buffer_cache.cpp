@@ -291,6 +291,7 @@ public:
 					temp->freelist_next->freelist_previous = temp->freelist_previous;
 				}
 			}
+			
 			else if (flag==1)	// remove buffer from hash queue
 			{
 				if(temp->hash_next == temp)			// hash queue is empty
