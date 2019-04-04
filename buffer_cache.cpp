@@ -4,13 +4,15 @@
 #include<unistd.h>
 #include<thread>
 #include<mutex>
+#include<signal.h>
+
 
 #define MAX_REQUEST 10
 #define MAX_THREAD 4
 
 using namespace std;
 
-mutex m;	// mutex lock
+mutex m1,m2;	// mutex lock
 
 class buffer
 {
@@ -72,9 +74,6 @@ int status;			// status = 0 ( buffer is free ) , status = 1 (buffer is busy) , s
 				cout<<"Delayed Write";
 		}
 
-
-
-
 };
 
 class buffer_cache
@@ -108,6 +107,7 @@ public:
 
 		}
 
+		
 		buffer* searchBuffer(int block_number, int flag)  
 		{
 			/*
@@ -133,6 +133,7 @@ public:
 					}while(temp!=head);
 				}
 			}
+			
 			else if (flag==1)		// search buffer in hash queue
 			{
 				if(!isEmpty())
@@ -151,7 +152,7 @@ public:
 			return bufferFound;
 		}
 		
-
+		
 		void insertBufferAtTail(buffer* insertBuffer, int flag)       
 		{   
 			/*
@@ -203,6 +204,7 @@ public:
 			}
 		}
 
+		
 		void insertBufferAtHeadFreeList(buffer* insertBuffer) 
 		{
 			/*
@@ -229,7 +231,7 @@ public:
 		
 		}
 
-
+		
 		buffer* removeBufferFromHeadFreeList()
 		{
 			/*
@@ -257,8 +259,7 @@ public:
 			return temp;
 		}
 
-	
-
+		
 		buffer* removeSpecificBuffer(int block_number,int flag)
 		{
 			/*
@@ -330,11 +331,10 @@ public:
 		}
 
 	
-
 		void printHash()
 		{
 			/*
-				Objective : Print the content of a specific Hash Queue
+				Objective : Print the content of a specific Hash Queue , i.e format -> (block number, process Id)
 				Input : None
 				Return : None
 			*/
@@ -344,14 +344,12 @@ public:
 				buffer* temp = head;
 				if(temp->hash_next == temp)			// only one buffer in Hash Queue
 				{
-					//cout<<"("<<temp->block_number<<","<<temp->status<<")"<<"  ";
-					cout<<temp->block_number<<" ";
+					cout<<"("<<temp->block_number<<","<<temp->processId<<")"<<"  ";
 				}
 				else
 				{
 					do{
-						//cout<<"("<<temp->block_number<<","<<temp->status<<")"<<"  ";
-						cout<<temp->block_number<<" ";
+						cout<<"("<<temp->block_number<<","<<temp->processId<<")"<<"  ";
 						temp=temp->hash_next;
 					}while(temp!=head);
 				}
@@ -362,10 +360,11 @@ public:
 
 		}
 
+		
 		void printFreeList()
 		{
 			/*
-				Objective : Print the content of Free List
+				Objective : Print the content of Free List , i.e format -> (block number, status)
 				Input : None
 				Return : None
 			*/
@@ -375,12 +374,12 @@ public:
 				buffer* temp =head;
 				if(temp->freelist_next == temp)
 				{
-					cout<<temp->block_number;
+					cout<<"("<<temp->block_number<<","<<temp->status<<")  ";
 				}
 				else
 				{
 					do{
-						cout<<temp->block_number<<" ";
+						cout<<"("<<temp->block_number<<","<<temp->status<<")  ";
 						temp=temp->freelist_next;
 					}while(temp!=head);
 				}
@@ -389,11 +388,10 @@ public:
 			else
 				cout<<"Underflow";
 
-	}
-
-	
+		}
 
 }hashQueue[4], freelist;
+
 
 void displayHashAndFreeList()
 {
@@ -404,20 +402,35 @@ void displayHashAndFreeList()
 	*/
 	
 	cout<<"\n\n-----HASH QUEUE------";
-	cout<<"\nhash 0 : ";
-	hashQueue[0].printHash();
-	cout<<"\nhash 1 : ";
-	hashQueue[1].printHash();
-	cout<<"\nhash 2 : ";
-	hashQueue[2].printHash();
-	cout<<"\nhash 3 : ";
-	hashQueue[3].printHash();
-
+	for (int i=0; i<4; i++)
+	{
+		cout<<"\nHash "<<i<<" : ";
+		hashQueue[i].printHash();
+	}
+	
 	cout<<"\n\n-------FREELIST-------";
 	cout<<"\nfreelist : ";
 	freelist.printFreeList();
 }
 
+void blockAcquired(int signum)
+{		
+		cout<<"\nBlock Acquired Successfully";
+		sleep(4);
+		signal(SIGUSR1,blockAcquired);
+}
+
+void blockReleased(int signum)
+{
+	cout<<"\nBlock released successfully";
+	signal(SIGUSR2,blockReleased);
+}
+
+
+/*void resumeProcess()
+{
+
+}*/
 
 buffer* getBlock(int block_number,int pid)
 {
@@ -435,51 +448,52 @@ buffer* getBlock(int block_number,int pid)
 		Return : Free Block 
 	*/
 		
-		buffer* allocatedBuffer = NULL;
-		while(allocatedBuffer==NULL)
+	buffer* allocatedBuffer = NULL;
+	while(allocatedBuffer==NULL)
+	{
+		//signal(SIGUSR1,blo);
+		buffer *blockBuffer = hashQueue[block_number%4].searchBuffer(block_number,1);
+		if(blockBuffer!=NULL)		// if buffer in hash queue 
 		{
-			buffer *blockBuffer = hashQueue[block_number%4].searchBuffer(block_number,1);
-			if(blockBuffer!=NULL)		// if buffer in hash queue 
+			if(blockBuffer->status == 1) // buffer is busy      (scenerio 5)
 			{
-				if(blockBuffer->status == 1) // buffer is busy      (scenerio 5)
-				{
-					cout<<"\nBuffer is busy. Process "<<pid<<" should sleep\n";
-					sleep (4);   // sleep(event buffer become free)
-					continue;
-				}
-				freelist.removeSpecificBuffer(block_number,0);     // (scenerio 1)
-				allocatedBuffer=blockBuffer;
+				cout<<"\nBuffer is busy. Process "<<pid<<" should sleep\n";
+				sleep (4);   // sleep(event buffer become free)
+				continue;
 			}
-
-			else	// block not on hash queue
-			{
-				buffer* freelistBuffer=freelist.removeBufferFromHeadFreeList();
-				if (freelist.isEmpty())			// freelist is empty       (scenerio 4)
-				{
-					cout<<"\nFreelist is empty. No buffer is available";
-					sleep(4);			//sleep(event any buffer become free);
-					continue;
-				}
-			
-				else if(freelistBuffer!=NULL)
-				{
-					if(freelistBuffer->status == 2)  				// buffer marked delayed write     (scenerio 3)
-					{
-						cout<<"\nAsync write buffer to disk (Delayed Write)";   //asynchronous write buffer to disk
-						sleep(4);
-						freelistBuffer->status = 0;
-						freelist.insertBufferAtHeadFreeList(freelistBuffer);
-						continue;
-					}
-					else			// (scenerio 2) -- Found in free buffer
-					{	
-						allocatedBuffer = freelistBuffer;
-						hashQueue[block_number%4].insertBufferAtTail(freelistBuffer,1);
-					}
-				}
-			}
-			return allocatedBuffer;			// return allocated buffer	
+			freelist.removeSpecificBuffer(block_number,0);     // (scenerio 1)
+			allocatedBuffer=blockBuffer;
 		}
+
+		else	// block not on hash queue
+		{
+			buffer* freelistBuffer=freelist.removeBufferFromHeadFreeList();
+			if (freelist.isEmpty())			// freelist is empty       (scenerio 4)
+			{
+				cout<<"\nFreelist is empty. No buffer is available";
+				sleep(4);			//sleep(event any buffer become free);
+				continue;
+			}
+			
+			else if(freelistBuffer!=NULL)
+			{
+				if(freelistBuffer->status == 2)  				// buffer marked delayed write     (scenerio 3)
+				{
+					cout<<"\nAsync write buffer to disk (Delayed Write)";   //asynchronous write buffer to disk
+					sleep(4);
+					freelistBuffer->status = 0;
+					freelist.insertBufferAtHeadFreeList(freelistBuffer);
+					continue;
+				}
+				else			// (scenerio 2) -- Found in free buffer
+				{	
+					allocatedBuffer = freelistBuffer;
+					hashQueue[block_number%4].insertBufferAtTail(freelistBuffer,1);
+				}
+			}
+		}
+		return allocatedBuffer;			// return allocated buffer	
+	}
 }
 
 
@@ -501,6 +515,7 @@ bool brelse(int block_number,int status)
 	return false;
 }
 
+
 void updateBuffer(buffer* buffer,int block_number,int processId)
 {
 	/*
@@ -516,7 +531,6 @@ void updateBuffer(buffer* buffer,int block_number,int processId)
 
 
 
-
 void processManager(int processId)
 {
 	/*
@@ -528,20 +542,24 @@ void processManager(int processId)
 	int request = MAX_REQUEST;
 	srand(time(NULL));
 	while(request>0)
-	{	
+	{	signal(SIGUSR1,blockAcquired);
+		signal(SIGUSR2,blockReleased);
 		int blk_num = rand()%20 + 1;
+
+		m2.lock();
 		cout<<"\nProcess number  = "<<processId<<"  , requested block number =  "<<blk_num;
+		m2.unlock();
 		
-		m.lock();		// acquiring lock 		
+		m1.lock();		// acquiring lock 		
 		
 		buffer* block = getBlock(blk_num,processId);
 		if(block!=NULL)
 		{
 			updateBuffer(block,blk_num,processId);
-			cout<<"\nBlock Number "<<blk_num<<" is allocated to Process "<<processId;
+			raise(SIGUSR1);
+			displayHashAndFreeList();
 			
-			m.unlock();		// releasing lock
-			sleep(4);			
+			m1.unlock();		// releasing lock	
 			
 			int status = rand()%2;			// randomly selecting status for releasing the buffer
 			
@@ -550,11 +568,7 @@ void processManager(int processId)
 			
 			if(brelse(blk_num,status))
 			{
-				cout<<"\nSuccessfully release the buffer "<<blk_num<<" by Process "<<processId<<" with Status = ";
-				if(status==0)
-					cout<<"Free";
-				else
-					cout<<"Delayed Write";
+				raise(SIGUSR2);
 			}
 			
 			else
