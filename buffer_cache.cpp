@@ -5,14 +5,20 @@
 #include<thread>
 #include<mutex>
 #include<signal.h>
+#include<condition_variable>
+#include<chrono>
 
 
-#define MAX_REQUEST 10
-#define MAX_THREAD 4
+#define MAX_REQUEST 3
+#define MAX_THREAD 3	
 
 using namespace std;
 
-mutex m1,m2;	// mutex lock
+bool flag=false;
+int i=0;
+
+mutex cv_m,mtx,io,m1,m2,m3,m4,m5;	// mutex lock
+condition_variable cv;
 
 class buffer
 {
@@ -240,7 +246,7 @@ public:
 				Return : Removed Buffer
 			*/
 
-			buffer* temp;
+			buffer* temp=NULL;
 			if(!isEmpty())
 			{
 				if(head == head->freelist_next) // only one buffer in freelist
@@ -291,7 +297,6 @@ public:
 					temp->freelist_next->freelist_previous = temp->freelist_previous;
 				}
 			}
-			
 			else if (flag==1)	// remove buffer from hash queue
 			{
 				if(temp->hash_next == temp)			// hash queue is empty
@@ -414,24 +419,51 @@ void displayHashAndFreeList()
 	freelist.printFreeList();
 }
 
-void blockAcquired(int signum)
-{		
-	cout<<"\nBlock Acquired Successfully";
-	sleep(4);
-	signal(SIGUSR1,blockAcquired);
+
+void waits() 
+{
+	/*
+		Objective : wait causes the current thread to block until the condition variable is notified.  The thread will be unblocked when notify_all() 
+					or notify_one() is executed
+		Input : None
+		Return : None
+	*/
+    unique_lock<mutex> lk(cv_m);
+    cerr << "\nWaiting for buffer to be free \n";
+    flag = true;
+    cv.wait(lk, []{return i == 1;});
+    sleep(3);
+    cerr << "\nBuffer is Free. Finished waiting.\n";
 }
 
-void blockReleased(int signum)
+void signals() 
 {
-	cout<<"\nBlock released successfully";
-	signal(SIGUSR2,blockReleased);
+	/*
+		Objective : signal all the waiting thread with the help of notify_all()
+		Input : None
+		Output : None
+	*/
+    sleep(4);
+    {
+        lock_guard<mutex> lk(cv_m);
+        i = 1;
+        cerr << "\nNotifying to All Waiting Processes\n";
+    }
+    cv.notify_all();
 }
 
-
-/*void resumeProcess()
+void updateBuffer(buffer* buffer,int block_number,int processId)
 {
+	/*
+		Objective : Updates the content of the buffer with specified values
+		Input : Buffer, block number, process id
+		Return : None
+	*/
 
-}*/
+	buffer->block_number = block_number;
+	buffer->processId = processId;
+	buffer->status = 1;    // mark buffer busy
+}
 
 buffer* getBlock(int block_number,int pid)
 {
@@ -452,46 +484,68 @@ buffer* getBlock(int block_number,int pid)
 	buffer* allocatedBuffer = NULL;
 	while(allocatedBuffer==NULL)
 	{
-		//signal(SIGUSR1,blo);
 		buffer *blockBuffer = hashQueue[block_number%4].searchBuffer(block_number,1);
 		if(blockBuffer!=NULL)		// if buffer in hash queue 
 		{
 			if(blockBuffer->status == 1) // buffer is busy      (scenerio 5)
-			{
-				cout<<"\nBuffer is busy. Process "<<pid<<" should sleep\n";
-				sleep (4);   // sleep(event buffer become free)
+			{	
+				m1.lock();
+				cout<<"\nBuffer is busy. Process "<<pid<<" should sleep    (scenerio -5 )\n    ";
+				m1.unlock();
+				waits();
 				continue;
 			}
+
+			m2.lock();
+			cout<<"\nBlock Number "<<block_number<<" is allocated to Process "<<pid<<"   ( scenerio-1)";
+			updateBuffer(blockBuffer,block_number,pid);
 			freelist.removeSpecificBuffer(block_number,0);     // (scenerio 1)
 			allocatedBuffer=blockBuffer;
+			displayHashAndFreeList();
+			m2.unlock();
 		}
 
 		else	// block not on hash queue
 		{
-			buffer* freelistBuffer=freelist.removeBufferFromHeadFreeList();
+			
 			if (freelist.isEmpty())			// freelist is empty       (scenerio 4)
-			{
-				cout<<"\nFreelist is empty. No buffer is available";
-				sleep(4);			//sleep(event any buffer become free);
+			{	m3.lock();
+				cout<<"\nFreelist is empty. No buffer is available   (scenerio-4)";
+				m3.unlock();
+				waits();
 				continue;
 			}
 			
-			else if(freelistBuffer!=NULL)
+			buffer* freelistBuffer=freelist.removeBufferFromHeadFreeList();
+			if(freelistBuffer!=NULL)
 			{
-				if(freelistBuffer->status == 2)  				// buffer marked delayed write     (scenerio 3)
-				{
-					cout<<"\nAsync write buffer to disk (Delayed Write)";   //asynchronous write buffer to disk
-					sleep(4);
-					freelistBuffer->status = 0;
-					freelist.insertBufferAtHeadFreeList(freelistBuffer);
+			if(freelistBuffer->status == 2)  				// buffer marked delayed write     (scenerio 3)
+			{
+				  	m4.lock();
+					cout<<"\nAsync write buffer to disk (Delayed Write)     - (scenerio-3)";   //asynchronous write buffer to disk
+					freelistBuffer->status=1;   // mark buffer busy
+					hashQueue[freelistBuffer->block_number%4].insertBufferAtTail(freelistBuffer,1);   // insert marked buffer to the corresponding hash queue
+					sleep(4);		
+
+					buffer* temp=hashQueue[freelistBuffer->block_number%4].removeSpecificBuffer(freelistBuffer->block_number,1);   // remove after async write
+					temp->status=0;   								// mark free
+					freelist.insertBufferAtHeadFreeList(temp);    // add it to the free list
+					m4.unlock();
 					continue;
-				}
-				else			// (scenerio 2) -- Found in free buffer
-				{	
-					allocatedBuffer = freelistBuffer;
-					hashQueue[block_number%4].insertBufferAtTail(freelistBuffer,1);
-				}
 			}
+				// Scenerio - 2
+				m5.lock();
+				cout<<"\nBlock Number "<<block_number<<" is allocated to Process "<<pid<<"   ( scenerio-2)";
+				if(hashQueue[freelistBuffer->block_number%4].searchBuffer(freelistBuffer->block_number,1)!=NULL)
+					hashQueue[freelistBuffer->block_number%4].removeSpecificBuffer(freelistBuffer->block_number,1);
+	
+				updateBuffer(freelistBuffer,block_number,pid);
+				hashQueue[block_number%4].insertBufferAtTail(freelistBuffer,1);
+				allocatedBuffer = freelistBuffer;
+				displayHashAndFreeList();
+				m5.unlock();
+			}
+
 		}
 		return allocatedBuffer;			// return allocated buffer	
 	}
@@ -517,18 +571,7 @@ bool brelse(int block_number,int status)
 }
 
 
-void updateBuffer(buffer* buffer,int block_number,int processId)
-{
-	/*
-		Objective : Updates the content of the buffer with specified values
-		Input : Buffer, block number, process id
-		Return : None
-	*/
 
-	buffer->block_number = block_number;
-	buffer->processId = processId;
-	buffer->status = 1;    // mark buffer busy
-}
 
 
 
@@ -541,45 +584,48 @@ void processManager(int processId)
 	*/
 
 	int request = MAX_REQUEST;
-	srand(time(NULL));
+	srand(time(0));
 	while(request>0)
-	{	signal(SIGUSR1,blockAcquired);
-		signal(SIGUSR2,blockReleased);
-		int blk_num = rand()%20 + 1;
-
-		m2.lock();
-		cout<<"\nProcess number  = "<<processId<<"  , requested block number =  "<<blk_num;
-		m2.unlock();
+	{	
+		int blk_num;
 		
-		m1.lock();		// acquiring lock 		
+		io.lock();
+		blk_num = rand()%20 + 1;
+		cout<<"\nProcess number  = "<<processId<<"  , requested block number =  "<<blk_num;
+		io.unlock();
 		
 		buffer* block = getBlock(blk_num,processId);
+		
 		if(block!=NULL)
 		{
-			updateBuffer(block,blk_num,processId);
-			raise(SIGUSR1);
-			displayHashAndFreeList();
-			
-			m1.unlock();		// releasing lock	
-			
+			sleep(6);
 			int status = rand()%2;			// randomly selecting status for releasing the buffer
 			
 			if(status == 1)					
 				status=2;	
 			
-			if(brelse(blk_num,status))
+			if(brelse(blk_num,status))     // releasing the buffer
 			{
-				raise(SIGUSR2);
+				cout<<"\nSuccessfully release the buffer "<<blk_num<<" by Process "<<processId;
+				if (flag == true)  
+				{
+					signals();    // sending signal to all the waiting process
+					flag=false;
+				}
 			}
 			
 			else
 			{
+				io.lock();
 				cout<<"\nBuffer is not released due to some error";
+				io.unlock();
 			}			
 		}
 		else
 		{
+			io.lock();
 			cout<<"\nUnable to access the requested block";
+			io.unlock();
 		}
 		request--;
 	}
@@ -590,13 +636,14 @@ int main()
 {
 	// inilizatilizing free list
 	srand (time(0));
-	for (int i=0; i<20; i++)   // initialising 20 buffer in freelist
+	for (int i=0; i<2; i++)   // initialising n buffer in freelist
 	{
 				freelist.insertBufferAtTail(new buffer(),0); 
 	}
-
+	mtx.lock();
 	cout<<"\nInitially";
 	displayHashAndFreeList();
+	mtx.unlock();
 	
 	thread t[MAX_THREAD];				// creating thread
 	for (int i=0; i<MAX_THREAD; i++)
@@ -604,6 +651,7 @@ int main()
 
 	for (int i=0; i<MAX_THREAD; i++)
 		t[i].join();					// wait for t[i] to finish
+
 
 	cout<<"\n\nState of free list and hash after execution of process";
 	displayHashAndFreeList();
