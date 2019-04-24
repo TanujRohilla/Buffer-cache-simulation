@@ -35,18 +35,17 @@ void processManager(int processId)
 		buffer* block;
 		io.lock();
 		blk_num = rand()%20 + 1;
-		cout<<"\nProcess number  = "<<processId<<"  , requested block number =  "<<blk_num;
-
+		
 		rw = rand()%2;
 		
 		if (rw == 0)
 		{
-			cout<<"\nProcess = "<<processId<<" wants to READ from blk number = "<<blk_num;
+			cout<<"\nProcess number  = "<<processId<<"  , requested block number =  "<<blk_num<<" ---- Initiate READ request";
 			choice="read";
 		}
 		else
 		{
-			cout<<"\nProcess = "<<processId<<" wants to WRITE from blk number = "<<blk_num;
+			cout<<"\nProcess number  = "<<processId<<"  , requested block number =  "<<blk_num<<" ---- Initiate WRITE request";
 			choice="write";	
 		}
 		
@@ -62,7 +61,6 @@ void processManager(int processId)
 		
 		if(block!=NULL)
 		{
-			//sleep(6);
 			int status = rand()%2;			// randomly selecting status for releasing the buffer
 			int i = rand()%2;
 			bool valid_bit;

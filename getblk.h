@@ -213,9 +213,9 @@ bool brelse(int block_number,int status,bool valid)
 buffer* bread(int blk_num, int processId)
 {
 	/*
-		Objective : 
-		Input : 
-		Return :
+		Objective : read block  
+		Input : block number and process ID
+		Return : buffer
 	*/
 
 	buffer* getBuffer = getBlock(blk_num,processId);
@@ -232,20 +232,22 @@ buffer* bread(int blk_num, int processId)
 buffer* bwrite(int blk_num, int processId)
 {	
 	/*
-		Objective : 
-		Input : 
-		Return :
+		Objective : block write
+		Input : block number and process Id
+		Return : buffer
 	*/
 	
 	buffer* getBuffer = getBlock(blk_num,processId);
-	if(getBuffer->valid == true)
-	{	sleep(1);
-		return getBuffer;
+	if(getBuffer->valid == true )
+	{
+		cout<<"\nInitiate Disk Write";
+		sleep(5);   // initiate disk write
 	}
-	cout<<"\nInitiate Disk Write";
-	sleep(5);    // initiate disk write
-	getBuffer->status = true;
-	return getBuffer;	
+	else
+	{
+		cout<<"\nDisk write cannot be initiated - Invalid data ";
+	}
+	return getBuffer;
 }
 
 
