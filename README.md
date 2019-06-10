@@ -25,7 +25,6 @@ free list. Hence, the buffers that are closer to the head of the free list have 
 are further from the head of the free list.
 
 ![Image of Free List](\Images\free_list_of_buffer.png)
-                          Free List of Buffers
 
 When the kernel accesses a disk block, it searches for a buffer with the appropriate device-block number combination. 
 Rather than search the entire buffer pool, it organizes the buffers into separate queues, hashed as a function of the 
@@ -33,7 +32,6 @@ device and block number. The kernel links the buffers on a hash queue into a cir
 structure of the free list.
 
 ![Image of Hash Queue](\Images\buffer_hash_queue.png)
-                          Buffers on the Hash Queues
 
 # Algorithm
 1. **getblk** - The algorithm for reading and writing disk blocks use the algorithm *getblk* to allocate buffers from the pool
