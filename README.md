@@ -23,7 +23,11 @@ buffer to the tail of the free list, occasionally to the head of the free list (
 middle. As the kernel removes buffers from the free list, a buffer with valid data moves closer and closer to head of the 
 free list. Hence, the buffers that are closer to the head of the free list have not been used as recently as those that 
 are further from the head of the free list.
-
+<p align="center">
+  <b>Some Links:</b><br>
+  <br><br>
+  <img src="/Images/free_list_of_buffer.png">
+</p>
 ![Image of Free List](/Images/free_list_of_buffer.png)
 
 When the kernel accesses a disk block, it searches for a buffer with the appropriate device-block number combination. 
