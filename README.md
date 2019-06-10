@@ -43,6 +43,22 @@ structure of the free list.
 1. **getblk** - The algorithm for reading and writing disk blocks use the algorithm *getblk* to allocate buffers from the pool
 2. **brelse** - When the kernel finishes using the buffer, it release the buffer using *brelse* algorithm  
 
+# Working
+1. Multithreading is used for creating the processes.
+2. Each thread will call `getblk` algorithm for reading and writing data from `processManager()` function.
+3. Mutex Locks are used for synchronisation among multiple threads, so that no other thread modifies the content of buffer pool 
+while current thread is executing. All other thread will wait until current thread finishes.
+4. Condition Variable is used for signal handling among mutiple threads. `Wait()` and `Signal()` function are used. 
+`Wait()` function will be called when any thread is waiting for buffer to become free. Wait causes the current thread to block 
+until the condition variable is notified.
+The thread will be unblocked when `notify_all()` or `notify_one()` is executed.
+`Signal()` is used to wake up all the the waiting process waiting for free buffer or particular buffer.
+5. When thread finishes it works. It will call `brelse` algorithm and put the buffer at the end of free list of buffer. 
+
+# How to run
+1. Open terminal and execute `g++ -std=c++11 -pthread -o process process.cpp` command.
+2. To run the newly created executable file execute `./process`
+
 
 
 
