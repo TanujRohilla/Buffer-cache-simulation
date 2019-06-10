@@ -23,19 +23,21 @@ buffer to the tail of the free list, occasionally to the head of the free list (
 middle. As the kernel removes buffers from the free list, a buffer with valid data moves closer and closer to head of the 
 free list. Hence, the buffers that are closer to the head of the free list have not been used as recently as those that 
 are further from the head of the free list.
+
 <p align="center">
-  <b>Some Links:</b><br>
-  <br><br>
   <img src="/Images/free_list_of_buffer.png">
+  <b>Free List of Buffers</b><br><br>
 </p>
-![Image of Free List](/Images/free_list_of_buffer.png)
 
 When the kernel accesses a disk block, it searches for a buffer with the appropriate device-block number combination. 
 Rather than search the entire buffer pool, it organizes the buffers into separate queues, hashed as a function of the 
 device and block number. The kernel links the buffers on a hash queue into a circular, doubly linked list, similar to the 
 structure of the free list.
 
-![Image of Hash Queue](/Images/buffer_hash_queue.png)
+<p align="center">
+  <img src="/Images/buffer_hash_queue.png">
+  <b>Buffers on the Hash Queues</b><br><br>
+</p>
 
 # Algorithm
 1. **getblk** - The algorithm for reading and writing disk blocks use the algorithm *getblk* to allocate buffers from the pool
