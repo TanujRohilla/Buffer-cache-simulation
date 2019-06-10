@@ -31,7 +31,7 @@ Rather than search the entire buffer pool, it organizes the buffers into separat
 device and block number. The kernel links the buffers on a hash queue into a circular, doubly linked list, similar to the 
 structure of the free list.
 
-![Image of Hash Queue()
+![Image of Hash Queue]()
 
 # Algorithm
 1. **getblk** - The algorithm for reading and writing disk blocks use the algorithm *getblk* to allocate buffers from the pool
