@@ -25,8 +25,8 @@ free list. Hence, the buffers that are closer to the head of the free list have 
 are further from the head of the free list.
 
 <p align="center">
-  <img src="/Images/free_list_of_buffer.png">
   <b>Free List of Buffers</b><br><br>
+  <img src="/Images/free_list_of_buffer.png">
 </p>
 
 When the kernel accesses a disk block, it searches for a buffer with the appropriate device-block number combination. 
@@ -35,8 +35,8 @@ device and block number. The kernel links the buffers on a hash queue into a cir
 structure of the free list.
 
 <p align="center">
-  <img src="/Images/buffer_hash_queue.png">
   <b>Buffers on the Hash Queues</b><br><br>
+  <img src="/Images/buffer_hash_queue.png">
 </p>
 
 # Algorithm
