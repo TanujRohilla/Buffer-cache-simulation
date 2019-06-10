@@ -24,7 +24,7 @@ middle. As the kernel removes buffers from the free list, a buffer with valid da
 free list. Hence, the buffers that are closer to the head of the free list have not been used as recently as those that 
 are further from the head of the free list.
 
-![Image of Free List](\Images\free_list_of_buffer)
+![Image of Free List](\Images\free_list_of_buffer.png)
                           Free List of Buffers
 
 When the kernel accesses a disk block, it searches for a buffer with the appropriate device-block number combination. 
@@ -32,7 +32,7 @@ Rather than search the entire buffer pool, it organizes the buffers into separat
 device and block number. The kernel links the buffers on a hash queue into a circular, doubly linked list, similar to the 
 structure of the free list.
 
-![Image of Hash Queue](\Images\buffer_hash_queue)
+![Image of Hash Queue](\Images\buffer_hash_queue.png)
                           Buffers on the Hash Queues
 
 # Algorithm
