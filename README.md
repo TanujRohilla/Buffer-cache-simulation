@@ -57,7 +57,7 @@ The thread will be unblocked when `notify_all()` or `notify_one()` is executed.
 
 # How to run
 1. Open terminal and execute `g++ -std=c++11 -pthread -o process process.cpp` command.
-2. To run the newly created executable file execute `./process`
+2. To run the newly created executable file, execute `./process` command.
 
 
 
